@@ -12,9 +12,13 @@ def affine_transform(A, a, img, bilinear=False):
     :return: Affin verzerrtes Eingabebild
     """
     orig_shape = img.shape
-    new_shape = tuple([int(orig_shape[0] + orig_shape[0] * 0.1),
-                       int(orig_shape[1] + orig_shape[1] * 0.1),
-                       orig_shape[2]])
+    if len(orig_shape) == 3:
+        new_shape = tuple([int(orig_shape[0] + orig_shape[0] * 0.1),
+                           int(orig_shape[1] + orig_shape[1] * 0.1),
+                           orig_shape[2]])
+    else:
+        new_shape = tuple([int(orig_shape[0] + orig_shape[0] * 0.1),
+                           int(orig_shape[1] + orig_shape[1] * 0.1)])
     new_img = np.zeros(new_shape, img.dtype)
 
     for x in range(0, new_img.shape[0]):

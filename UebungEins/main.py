@@ -1,4 +1,4 @@
-from skimage import data, io
+from skimage import data, io, color
 from matplotlib import pyplot as plt
 import numpy as np
 import UebungEins.AffineTransform
@@ -16,10 +16,14 @@ entzerr = np.array([[0.891, -0.454],
 
 vector = np.array([0, 0])
 
-img0 = data.imread("resources/gletscher.jpg")
 
-img1 = UebungEins.AffineTransform.affine_transform(A=rotate, a=vector, img=img0, bilinear=True)
+gletscher = data.imread("resources/gletscher.jpg")
+ambassadors = data.imread("resources/ambassadors.jpg")
+schraegbild_tempelhof = data.imread("resources/schraegbild_tempelhof.jpg")
 
+gletscher = color.rgb2gray(gletscher)
+
+img1 = UebungEins.AffineTransform.affine_transform(A=rotate, a=vector, img=gletscher, bilinear=True)
 
 
 io.imshow(img1)
