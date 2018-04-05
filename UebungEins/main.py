@@ -20,5 +20,7 @@ img0 = data.imread("resources/gletscher.jpg")
 
 img1 = UebungEins.AffineTransform.affine_transform(A=rotate, a=vector, img=img0, bilinear=True)
 
+
+
 io.imshow(img1)
 plt.show()

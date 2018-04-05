@@ -17,42 +17,15 @@ def affine_transform(A, a, img, bilinear=False):
                        orig_shape[2]])
     new_img = np.zeros(new_shape, img.dtype)
 
-    for x in range(0, img.shape[0]):
-        for y in range(0, img.shape[1]):
-            original_coordinates = np.array([x, y])
-            new_coprdinates = np.add(np.dot(A, original_coordinates), a)
-            if new_coprdinates[0] <= new_shape[0] and new_coprdinates[1] <= new_shape[1]:
+    for x in range(0, new_img.shape[0]):
+        for y in range(0, new_img.shape[1]):
+            new_coprdinates = np.array([x, y])
+            original_coordinates = np.subtract(np.dot(np.linalg.inv(A), new_coprdinates), a)
+            if original_coordinates[0] < orig_shape[0] and original_coordinates[1] < orig_shape[1]:
                 if bilinear:
-                    new_img[int(new_coprdinates[0])][int(new_coprdinates[1])] = bilinear_interpolation(img, x, y)
+                    new_img[x][y] = bilinear_interpolation(img, original_coordinates[0], original_coordinates[1])
                 else:
-                    new_img[int(new_coprdinates[0])][int(new_coprdinates[1])] = img[x][y]
-    return new_img
-
-
-def affine_transform_on_new_image(A, a, img, bilinear=False):
-    """
-    Defines an affine transformation of an image.
-    :param A: Matrix
-    :param a: Verschiebungsvektor
-    :param img: Eingabebild
-    :param bilinear: Toggle for using bilinear interpolation
-    :return: Affin verzerrtes Eingabebild
-    """
-    orig_shape = img.shape
-    new_shape = tuple([int(orig_shape[0] + orig_shape[0] * 0.1),
-                       int(orig_shape[1] + orig_shape[1] * 0.1),
-                       orig_shape[2]])
-    new_img = np.zeros(new_shape, img.dtype)
-
-    for x in range(0, new_shape[0]):
-        for y in range(0, new_shape[1]):
-            original_coordinates = np.array([x, y])
-            new_coprdinates = np.add(np.dot(A, original_coordinates), a)
-            if new_coprdinates[0] <= new_shape[0] and new_coprdinates[1] <= new_shape[1]:
-                if bilinear:
-                    new_img[int(new_coprdinates[0])][int(new_coprdinates[1])] = bilinear_interpolation(img, x, y)
-                else:
-                    new_img[int(new_coprdinates[0])][int(new_coprdinates[1])] = img[x][y]
+                    new_img[x][y] = img[int(original_coordinates[0])][int(original_coordinates[1])]
     return new_img
 
 
@@ -64,15 +37,30 @@ def bilinear_interpolation(img, x, y):
     :param y: y coordinate of the source image to fetch (float)
     :return: Bilinear interpolateion of (x/y)
     """
-    a1 = (math.floor(x) + x) * (math.floor(y) + y)
-    a2 = (math.floor(x) + x) * (math.ceil(y) - y)
-    a3 = (math.ceil(x) - x) * (math.floor(y) + y)
+    a1 = (x - math.floor(x)) * (y - math.floor(y))
+    a2 = (x - math.floor(x)) * (math.ceil(y) - y)
+    a3 = (math.ceil(x) - x) * (y - math.floor(y))
     a4 = (math.ceil(x) - x) * (math.ceil(y) - y)
-    weighted_sum = a1 * img[math.ceil(x)][math.ceil(y)] +\
-                   a2 * img[math.ceil(x)][math.floor(y)] +\
-                   a3 * img[math.floor(x)][math.ceil(y)] +\
-                   a4 * img[math.floor(x)][math.floor(y)]
-    return normalize_color(weighted_sum)
+    weighted_sum = a1 * get_with_default(img, math.ceil(x), math.ceil(y)) +\
+                   a2 * get_with_default(img, math.ceil(x), math.floor(y)) +\
+                   a3 * get_with_default(img, math.floor(x), math.ceil(y)) +\
+                   a4 * get_with_default(img, math.floor(x), math.floor(y))
+    return weighted_sum
+
+
+def get_with_default(img, x, y, default=0):
+    """
+    Returns the value of the matrix at the given point or the default value if it is out of bounds.
+    :param img: ndarray
+    :param x: X coordinate
+    :param y: Y coordinate
+    :param default: The default value to be retuned if coordinates are out of bound.
+    :return: Type of matrix or default value.
+    """
+    if x >= img.shape[0] or y >= img.shape[1]:
+        return default
+    else:
+        return img[x][y]
 
 
 def normalize_color(pixel_array):
